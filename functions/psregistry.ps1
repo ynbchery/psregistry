@@ -1,3 +1,4 @@
+$env:psr_registry = "default"
 $PSRegistryPath = Join-Path -Path $HOME -ChildPath ".psregistry"
 $PSRegistryDbPath = Join-Path -Path $PSRegistryPath -ChildPath "db"
 $PSRegistryBackupsPath = Join-Path -Path $PSRegistryPath -ChildPath "backups"
@@ -43,6 +44,24 @@ Function Change-PSRegistry {
         Write-Host "Registry:$Name is now active"
     }
     
+}
+
+Function Backup-PSRegistry {
+    param (
+        $Registry=$env:psr_registry
+    )
+
+    $RegistryPath = Join-Path -Path $PSRegistryDbPath -ChildPath ("$Registry" + ".psr")
+    $Psr = Import-Clixml -Path $RegistryPath
+    $D = $Psr.Date
+    $BackupDate = ($D.Year.ToString() + $D.Month.ToString() + $D.Day.ToString() + $D.Hour.ToString() + $D.Minute.ToString() + $D.Second.ToString() )
+    $BackupPath = Join-Path -Path $PSRegistryBackupsPath -ChildPath ("$BackupDate" + "_" + "$Registry" + "_backup" + ".psr")
+    $Psr | Export-Clixml -Path $BackupPath
+    $BackupTest = Test-Path -Path $BackupPath
+    if ($BackupTest -eq $false) {
+        Write-Error "Backup of Registry:$Registry was unsuccessful"
+    }
+    Write-Host "Backup of Registry:$Name was successful"
 }
 
 Function Initialize-PSRegistry {
