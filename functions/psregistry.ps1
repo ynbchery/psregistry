@@ -81,10 +81,27 @@ Function Set-PSRItem {
     Return ("$Key : " + $NewPsr.$Key + " Stored successfully!")
 }
 
-Function Get-PSRegistry {
+Function Out-PSRItem {
+    [cmdletbinding()]
+    param (
+        [Parameter(Mandatory=$True,Position=0)]$Key,
+        [parameter(ValueFromPipeline)]$Input
+    )
+
+    $Psr = Import-Clixml -Path $PSRegistryDefaultPath
+    $Psr | Add-Member -MemberType NoteProperty -Name $Key -Value $Input -Force
+    $Psr | Add-Member -MemberType NoteProperty -Name Date -Value (Get-Date) -Force
+    $Psr | Export-Clixml -Path $PSRegistryDefaultPath
+    $NewPsr = Import-Clixml -Path $PSRegistryDefaultPath
+    Return ("$Key : " + $NewPsr.$Key + " Stored successfully!")
+}
+
+Function List-PSRItems {
     $Psr = Import-Clixml -Path $PSRegistryDefaultPath | Format-List
     Return $Psr
 }
 
 Set-Alias -Name gpsr -Value "Get-PSRItem"
 Set-Alias -Name spsr -Value "Set-PSRItem"
+Set-Alias -Name lpsr -Value "List-PSRItems"
+Set-Alias -Name opsr -Value "Out-PSRItem"
