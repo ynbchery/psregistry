@@ -1,4 +1,3 @@
-#$ErrorActionPreference = "SilentlyContinue"
 $PSRegistryPath = Join-Path -Path $HOME -ChildPath ".psregistry"
 $PSRegistryDbPath = Join-Path -Path $PSRegistryPath -ChildPath "db"
 $PSRegistryBackupsPath = Join-Path -Path $PSRegistryPath -ChildPath "backups"
