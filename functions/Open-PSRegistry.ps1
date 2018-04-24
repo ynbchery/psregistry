@@ -1,4 +1,4 @@
-Function Change-PSRegistry {
+Function Open-PSRegistry {
     param (
         [Parameter(Mandatory=$True,Position=0)]$Name
     )

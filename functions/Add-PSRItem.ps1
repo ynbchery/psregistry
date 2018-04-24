@@ -1,4 +1,4 @@
-Function Set-PSRItem {
+Function Add-PSRItem {
     param (
         [Parameter(Mandatory=$True,Position=0)]$Key,
         [Parameter(Mandatory=$True,Position=1)]$Value,

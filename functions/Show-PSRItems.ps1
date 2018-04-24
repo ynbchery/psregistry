@@ -1,4 +1,4 @@
-Function List-PSRItems {
+Function Show-PSRItems {
     param (
         $Registry=$env:psr_registry
     )
