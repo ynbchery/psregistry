@@ -4,15 +4,45 @@ $PSRegistryBackupsPath = Join-Path -Path $PSRegistryPath -ChildPath "backups"
 $PSRegistryObjectsPath = Join-Path -Path $PSRegistryPath -ChildPath "objects"
 $PSRegistryDefaultPath = Join-Path -Path $PSRegistryDbPath -ChildPath "default.psr"
 
-Function New-PSRObject {
-
+Function New-PSRegistry {
+    [cmdletbinding()]
+    param (
+        [Parameter(Mandatory=$True,Position=0)]$Name,
+        [parameter(ValueFromPipeline)]$Input
+    )
     $PSRObject = New-Object PSObject -Property @{                
-        Date = (Get-Date)
-        Domain = @($env:USERDOMAIN,$env:LOGONSERVER) 
+        Date = (Get-Date) 
     }
 
-    $PSRObject | Export-Clixml -Path $PSRegistryDefaultPath
-    Write-Host "Default registry was successfully created"
+    if ($Input) {
+        $Input | ForEach-Object {
+            $PSRObject | Add-Member -MemberType NoteProperty -Name ($PSItem.psobject.properties.Name).toString() -Value $PSItem.psobject.properties.Value
+        }
+    }
+
+    $RegistryPath = Join-Path -Path $PSRegistryDbPath -ChildPath ($Name + ".psr")
+    $PSRObject | Export-Clixml -Path $RegistryPath
+    Write-Host "Registry:$Name was successfully created"
+    Write-Host "To use registry:$Name, type 'Change-PSRegistry $Name'"
+}
+
+Function Change-PSRegistry {
+    param (
+        [Parameter(Mandatory=$True,Position=0)]$Name
+    )
+
+    $RegistryPath = Join-Path -Path $PSRegistryDbPath -ChildPath ($Name + ".psr")
+    $RegistryPathTest = Test-Path -Path $RegistryPath
+
+    if ($RegistryPathTest -eq $false) {
+        Write-Error "Registry:$Name could not be found"
+    }
+
+    elseif ($RegistryPathTest -eq $true) {
+        $env:psr_registry = $Name
+        Write-Host "Registry:$Name is now active"
+    }
+    
 }
 
 Function Initialize-PSRegistry {
@@ -57,26 +87,27 @@ Function Initialize-PSRegistry {
 Function Get-PSRItem {
     param (
         [Parameter(Mandatory=$True,Position=0)]$Key,
-        $subkey
+        $Registry=$env:psr_registry
     )
 
-    $Psr = Import-Clixml -Path $PSRegistryDefaultPath
+    $RegistryPath = Join-Path -Path $PSRegistryDbPath -ChildPath ("$Registry" + ".psr")
+    $Psr = Import-Clixml -Path $RegistryPath
     Return $Psr.$Key
 }
 
 Function Set-PSRItem {
     param (
         [Parameter(Mandatory=$True,Position=0)]$Key,
-        [Parameter(Mandatory=$True,Position=1)]$Value
+        [Parameter(Mandatory=$True,Position=1)]$Value,
+        $Registry=$env:psr_registry
     )
 
-    $Psr = Import-Clixml -Path $PSRegistryDefaultPath
-
+    $RegistryPath = Join-Path -Path $PSRegistryDbPath -ChildPath ("$Registry" + ".psr")
+    $Psr = Import-Clixml -Path $RegistryPath
     $Psr | Add-Member -MemberType NoteProperty -Name $Key -Value $Value -Force
     $Psr | Add-Member -MemberType NoteProperty -Name Date -Value (Get-Date) -Force
-    $Psr | Export-Clixml -Path $PSRegistryDefaultPath
-
-    $NewPsr = Import-Clixml -Path $PSRegistryDefaultPath
+    $Psr | Export-Clixml -Path $RegistryPath
+    $NewPsr = Import-Clixml -Path $RegistryPath
     Return ("$Key : " + $NewPsr.$Key + " Stored successfully!")
 }
 
@@ -84,19 +115,26 @@ Function Out-PSRItem {
     [cmdletbinding()]
     param (
         [Parameter(Mandatory=$True,Position=0)]$Key,
-        [parameter(ValueFromPipeline)]$Input
+        [parameter(ValueFromPipeline)]$Input,
+        $Registry=$env:psr_registry
     )
 
-    $Psr = Import-Clixml -Path $PSRegistryDefaultPath
+    $RegistryPath = Join-Path -Path $PSRegistryDbPath -ChildPath ("$Registry" + ".psr")
+    $Psr = Import-Clixml -Path $RegistryPath
     $Psr | Add-Member -MemberType NoteProperty -Name $Key -Value $Input -Force
     $Psr | Add-Member -MemberType NoteProperty -Name Date -Value (Get-Date) -Force
-    $Psr | Export-Clixml -Path $PSRegistryDefaultPath
-    $NewPsr = Import-Clixml -Path $PSRegistryDefaultPath
+    $Psr | Export-Clixml -Path $RegistryPath
+    $NewPsr = Import-Clixml -Path $RegistryPath
     Return ("$Key : " + $NewPsr.$Key + " Stored successfully!")
 }
 
 Function List-PSRItems {
-    $Psr = Import-Clixml -Path $PSRegistryDefaultPath | Format-List
+    param (
+        $Registry=$env:psr_registry
+    )
+
+    $RegistryPath = Join-Path -Path $PSRegistryDbPath -ChildPath ("$Registry" + ".psr")
+    $Psr = Import-Clixml -Path $RegistryPath | Format-List
     Return $Psr
 }
 
