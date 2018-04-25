@@ -17,5 +17,5 @@ Function New-PSRegistry {
     $RegistryPath = Join-Path -Path $env:PSRegistryDbPath -ChildPath ($Name + ".psr")
     $PSRObject | Export-Clixml -Path $RegistryPath
     Write-Host "Registry:$Name was successfully created"
-    Write-Host "To use registry:$Name, type 'Change-PSRegistry $Name'"
+    Write-Host "To use registry:$Name, type 'Open-PSRegistry $Name'"
 }
